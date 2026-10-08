@@ -7,7 +7,7 @@ router.get("/users", (req, res, next) => {
     users
         .find(query)
         .then((data) => {
-            console.log(data);
+            //console.log(data);
             return data;
         })
         .then((data) =>

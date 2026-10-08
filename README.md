@@ -1,5 +1,10 @@
 # IT Academy Sprint 8 Angular IV Inprocode. Backend
 
+## Vulnerabilities
+
+This repository was updated using npm update. Only three vulnerabilities are detected and the production deployment is not affected, but since this is a class assignment, I want to preserve the actual versions of the packages. No critical vulnerabilities.
+
+
 ### Environment setup
 
 ## Clone repository

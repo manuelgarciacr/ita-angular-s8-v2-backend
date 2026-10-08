@@ -7,7 +7,7 @@ router.get("/features", (req, res, next) => {
     features
         .find(query)
         .then((data) => {
-            console.log(data);
+            // console.log(data);
             return data;
         })
         .then((data) =>
@@ -22,11 +22,11 @@ router.get("/features", (req, res, next) => {
 
 router.get("/features/:id", (req, res, next) => {
     const id = req.url.split("/").pop()
-    console.log("ID", id)
+    // console.log("ID", id)
     features
         .findById(id)
         .then((data) => {
-            console.log(data);
+            // console.log(data);
             return [data];
         })
         .then((data) =>

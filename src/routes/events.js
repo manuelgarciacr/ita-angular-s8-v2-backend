@@ -7,7 +7,7 @@ router.get("/events", (req, res, next) => {
     events
         .find(query)
         .then((data) => {
-            console.log(data);
+            // console.log(data);
             return data;
         })
         .then((data) =>
