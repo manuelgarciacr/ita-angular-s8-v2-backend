@@ -8,6 +8,7 @@ module.exports = {
                 NODE_ENV: "production",
                 MONGO_URL: "mongodb://localhost:27017/ita-angular-s8-v2",
                 PORT: 3200,
+                DOM: "manuelgc.eu"
             },
         },
     ],

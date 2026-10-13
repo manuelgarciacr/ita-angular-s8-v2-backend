@@ -6,9 +6,15 @@
 
 debug = require("debug")("ita-angular-s8-ng-4-backend"); // Global function
 require('dotenv').config(); // Environment vars
-  
+
 const app = require('../src/server'); // Importing Express server
-const http = require('http'); // Or https
+const http = require('http');
+const https = require("https");
+const isProduction = process.env.NODE_ENV === "production";
+const DOM = process.env.DOM;
+const { readFileSync } = require("fs");
+const key = readFileSync(`/etc/letsencrypt/live/${DOM}/privkey.pem`)
+const cert = readFileSync(`/etc/letsencrypt/live/${DOM}/fullchain.pem`)
 
 /**
  * Connect to database
@@ -16,19 +22,26 @@ const http = require('http'); // Or https
 
 require('../src/database');
 
-/**  
- * Create HTTP server.
- */
-
-var server = http.createServer(app); // Or https  
-
 /**
  * Listen on provided port, on all network interfaces.
  */
 
 app.get('port').then(port => {
-    var listener = server.listen(port, function(){
-        console.log('Listening on port ' + listener.address().port);
+    if (isProduction) {
+        const options = {
+            key,
+            cert
+        };
+        server = https.createServer(options, app);
+    } else {
+        server = http.createServer(app);
+    }
+
+    // var listener = server.listen(port, function(){
+    server.listen(port, function(){
+        console.log(
+            `${isProduction ? "HTTPS" : "HTTP"} server listening on port ${port}`,
+        );
     });
     server.on('error', onError);
     server.on('listening', onListening);

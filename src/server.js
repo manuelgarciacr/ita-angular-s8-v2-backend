@@ -31,6 +31,9 @@ app.use(cors({ origin: "http://localhost:4200" }));
 app.use(require("./routes/users"));
 app.use(require("./routes/features"));
 app.use(require("./routes/events"));
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
 
 module.exports = app;
 
