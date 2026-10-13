@@ -18,34 +18,33 @@ jobs:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
 
-    #   - name: Configurar Node.js
-    #     uses: actions/setup-node@v4
-    #     with:
-    #       node-version: 24
-    #       cache: npm
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
 
     #   - name: Instalar dependencias
     #     run: npm ci
 
     #   - name: Crear entorno de producción
     #     env:
-    #       ANGULAR_API_URL: ${{ secrets.ANGULAR_API_URL }}
-    #       ANGULAR_MAPBOX_TOKEN: ${{ secrets.ANGULAR_MAPBOX_TOKEN }}
+    #       MONGO_URL: ${{ secrets.MONGO_URL }}
+    #       PORT: ${{ secrets.PORT }}
     #     run: |
     #       node -e '
     #       const fs = require("node:fs");
     #       const env = {
-    #         production: true,
-    #         url: process.env.ANGULAR_API_URL,
-    #         mapboxToken: process.env.ANGULAR_MAPBOX_TOKEN
+    #         MONGO_URL: process.env.MONGO_URL,
+    #         PORT: process.env.PORT
     #       };
-    #       if (!env.url || !env.mapboxToken) {
-    #         console.error("Falta configurar ANGULAR_API_URL o ANGULAR_MAPBOX_TOKEN");
+    #       if (!env.MONGO_URL || !env.PORT) {
+    #         console.error("Falta configurar MONGO_URL o PORT");
     #         process.exit(1);
     #       }
     #       fs.writeFileSync(
-    #         "src/environments/environment.ts",
-    #         "export const environment = " + JSON.stringify(env, null, 2) + ";\n"
+    #         ".env",
+    #         "MONGO_URL=" + env.MONGO_URL + "\n" + "PORT=" + env.PORT + "\n"
     #       );
     #       '
 
@@ -83,9 +82,40 @@ jobs:
         run: |
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" deploy-angular@10.8.0.1 'whoami'
 
-    #   - name: Desplegar Angular
-    #     run: |
-    #       rsync -az --delete \
-    #         -e "ssh -o BatchMode=yes -o IdentitiesOnly=yes -i $HOME/.ssh/id_ed25519" \
-    #         dist/ita-angular-s8-v2/ \
-    #         deploy-angular@10.8.0.1:/var/www/html/ita-angular-s8-v2/
+      - name: Deploy
+        run: |
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" deploy-angular@10.8.0.1 '
+          set -e
+          set -o pipefail
+
+          if [ ! -d /var/www/html/nodejs/ita-angular-s8-v2-backend ]; then
+              git clone --filter=blob:none https://github.com/manuelgarciacr/ita-angular-s8-v2-backend.git /var/www/html/nodejs/ita-angular-s8-v2-backend
+          else
+              cd /var/www/html/nodejs/ita-angular-s8-v2-backend
+              git fetch origin
+              git reset --hard origin/main
+          fi
+
+          cd /var/www/html/nodejs/ita-angular-s8-v2-backend
+          git sparse-checkout set --no-cone "package.json" "ecosystem.config.js" "src/" "bin/"
+          npm install --omit=dev
+
+          # 1. Verify config file exists
+          [ -f ecosystem.config.js ] || { echo "ERROR: ecosystem.config.js not found"; exit 1; }
+
+          # 2. Remove stale PM2 entry to force reading the file
+          pm2 delete ita-angular-s8-v2-backup 2>/dev/null || true
+
+          # 3. Start from file (no cached config)
+          pm2 start ecosystem.config.js --env production || { echo "ERROR: pm2 start failed"; exit 1; }
+
+          # 4. Save process list
+          pm2 save || { echo "ERROR: pm2 save failed"; exit 1; }
+
+          # 5. Verify process is online
+          sleep 3
+          pm2 jlist | grep -q "\"status\":\"online\"" || { echo "ERROR: process is not online"; exit 1; }
+
+          echo "Deploy completed successfully"
+           '   
+                
