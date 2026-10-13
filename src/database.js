@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
-const url = process.env.MONGO_URL;
+const config = require("../src/config");
 
 //mongoose.set('useFindAndModify', false);
 //mongoose.set('useCreateIndex', true);
 //mongoose.set('useNewUrlParser', true);
 
-const connect = mongoose.connect(url); // Another way to configure options 
+const connect = mongoose.connect(config.MONGO_URL); // Another way to configure options 
  
 connect.then(db => 
     // To kill: $ npx kill-port 3000 ??????

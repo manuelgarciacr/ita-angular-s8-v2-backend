@@ -5,10 +5,8 @@
  */
 
 debug = require("debug")("ita-angular-s8-ng-4-backend"); // Global function
-require('dotenv').config(); // Environment vars
-  
+const config = require("../src/config");
 const app = require('../src/server'); // Importing Express server
-const http = require('http'); // Or https
 
 /**
  * Connect to database
@@ -16,28 +14,55 @@ const http = require('http'); // Or https
 
 require('../src/database');
 
-/**  
- * Create HTTP server.
- */
-
-var server = http.createServer(app); // Or https  
-
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-app.get('port').then(port => {
-    var listener = server.listen(port, function(){
-        console.log('Listening on port ' + listener.address().port);
-    });
-    server.on('error', onError);
-    server.on('listening', onListening);
-}).catch(err => console.error("ERROR:", err))
-  
+const port = normalizePort(config.PORT || "3000");
+
+if (port === false) {
+    console.error(`Invalid port: ${config.PORT}`);
+    process.exit(1);
+}
+debug(port);
+
+if (config.IS_PRODUCTION) {
+    const { readFileSync } = require("fs");
+    const key = readFileSync(`/etc/letsencrypt/live/${config.DOM}/privkey.pem`);
+    const cert = readFileSync(
+        `/etc/letsencrypt/live/${config.DOM}/fullchain.pem`,
+    );
+    const https = require("https");
+    server = https.createServer({ key, cert }, app);
+} else {
+    const http = require("http");
+    server = http.createServer(app);
+}
+
+server.listen(port, function () {
+    console.log(
+        `${config.IS_PRODUCTION ? "HTTPS" : "HTTP"} server listening on port ${port}`,
+    );
+});
+
+server.on("error", onError);
+server.on("listening", onListening);   
+
+/**
+ * Normalize a port value into a number, a string (named pipe), or false.
+ * Returns false if the value is not a valid port.
+ */   
+function normalizePort(val) {
+    var port = parseInt(val, 10);
+
+    if (isNaN(port)) return val; // named pipe
+    if (port >= 0) return port; // valid port
+    return false; // invalid
+}
+
 /**
  * Event listener for HTTP server "error" event.
  */
-
 function onError(error) {
     if (error.syscall !== 'listen') {
         throw error;
@@ -67,7 +92,6 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-
 function onListening() {
     const addr = server.address();
     const  bind = typeof addr === 'string'

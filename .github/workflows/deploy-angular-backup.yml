@@ -80,16 +80,17 @@ jobs:
 
       - name: Verificar conexión SSH
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" deploy-angular@10.8.0.1 'whoami'
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" webdeploy@10.8.0.1 'whoami'
 
       - name: Deploy
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" deploy-angular@10.8.0.1 '
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/id_ed25519" webdeploy@10.8.0.1 'bash -s' << 'EOF'
           set -e
           set -o pipefail
 
           if [ ! -d /var/www/html/nodejs/ita-angular-s8-v2-backend ]; then
-              git clone --filter=blob:none https://github.com/manuelgarciacr/ita-angular-s8-v2-backend.git /var/www/html/nodejs/ita-angular-s8-v2-backend
+              # git clone --filter=blob:none https://github.com/manuelgarciacr/ita-angular-s8-v2-backend.git /var/www/html/nodejs/ita-angular-s8-v2-backend
+              git clone --filter=blob:none git@github.com:manuelgarciacr/ita-angular-s8-v2-backend.git /var/www/html/nodejs/ita-angular-s8-v2-backend   
           else
               cd /var/www/html/nodejs/ita-angular-s8-v2-backend
               git fetch origin
@@ -102,6 +103,8 @@ jobs:
 
           # 1. Verify config file exists
           [ -f ecosystem.config.js ] || { echo "ERROR: ecosystem.config.js not found"; exit 1; }
+          
+          #echo "$(id)"
 
           # 2. Remove stale PM2 entry to force reading the file
           pm2 delete ita-angular-s8-v2-backup 2>/dev/null || true
@@ -113,9 +116,13 @@ jobs:
           pm2 save || { echo "ERROR: pm2 save failed"; exit 1; }
 
           # 5. Verify process is online
-          sleep 3
-          pm2 jlist | grep -q "\"status\":\"online\"" || { echo "ERROR: process is not online"; exit 1; }
+          sleep 6
+          status=$(pm2 jlist | jq -r '.[] | select(.name == "ita-angular-s8-v2-backup") | .pm2_env.status')
+          [[ $status == "online" ]] || { echo "ERROR: process is not online"; exit 1; }
 
+          # 6. Verify app actually responds
+          curl -sf --max-time 10 https://manuelgc.eu:3200/health > /dev/null || { echo "ERROR: app not responding"; exit 1; }
+          
           echo "Deploy completed successfully"
-           '   
+          EOF
                 
