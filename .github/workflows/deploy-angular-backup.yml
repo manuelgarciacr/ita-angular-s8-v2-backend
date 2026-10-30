@@ -24,35 +24,11 @@ jobs:
           node-version: 24
           cache: npm
 
-    #   - name: Instalar dependencias
-    #     run: npm ci
+      - name: Instalar dependencias
+        run: npm ci
 
-    #   - name: Crear entorno de producción
-    #     env:
-    #       MONGO_URL: ${{ secrets.MONGO_URL }}
-    #       PORT: ${{ secrets.PORT }}
-    #     run: |
-    #       node -e '
-    #       const fs = require("node:fs");
-    #       const env = {
-    #         MONGO_URL: process.env.MONGO_URL,
-    #         PORT: process.env.PORT
-    #       };
-    #       if (!env.MONGO_URL || !env.PORT) {
-    #         console.error("Falta configurar MONGO_URL o PORT");
-    #         process.exit(1);
-    #       }
-    #       fs.writeFileSync(
-    #         ".env",
-    #         "MONGO_URL=" + env.MONGO_URL + "\n" + "PORT=" + env.PORT + "\n"
-    #       );
-    #       '
-
-    #   - name: Compilar Angular para producción
-    #     run: npm run build-prod
-
-    #   - name: Comprobar la compilación
-    #     run: test -s dist/ita-angular-s8-v2/index.html
+      - name: Ejecutar tests unitarios
+        run: npm test
 
       - name: Instalar herramientas de despliegue
         run: |
