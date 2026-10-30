@@ -74,7 +74,7 @@ jobs:
           fi
 
           cd /var/www/html/nodejs/ita-angular-s8-v2-backend
-          git sparse-checkout set --no-cone "package.json" "package-lock.json" "ecosystem.config.js" "src/" "bin/"
+          git sparse-checkout set --no-cone "/package.json" "/package-lock.json" "/ecosystem.config.js" "/src/" "/bin/"
           npm ci --omit=dev
 
           # 1. Verify config file exists
