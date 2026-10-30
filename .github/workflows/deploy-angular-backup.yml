@@ -74,8 +74,8 @@ jobs:
           fi
 
           cd /var/www/html/nodejs/ita-angular-s8-v2-backend
-          git sparse-checkout set --no-cone "package.json" "ecosystem.config.js" "src/" "bin/"
-          npm install --omit=dev
+          git sparse-checkout set --no-cone "package.json" "package-lock.json" "ecosystem.config.js" "src/" "bin/"
+          npm ci --omit=dev
 
           # 1. Verify config file exists
           [ -f ecosystem.config.js ] || { echo "ERROR: ecosystem.config.js not found"; exit 1; }
